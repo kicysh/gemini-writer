@@ -82,9 +82,14 @@ Examples:
         help='Your writing request (e.g., "Create a mystery novel")'
     )
     parser.add_argument(
-        '--recover',
+        '--characters',
         type=str,
-        help='Path to a context summary file to continue from'
+        help='Path to text file containing character information'
+    )
+    parser.add_argument(
+        '--references',
+        type=str,
+        help='Reference text file path'
     )
     
     args = parser.parse_args()
@@ -92,11 +97,11 @@ Examples:
     # Check if recovery mode
     if args.recover:
         context = load_context_from_file(args.recover)
-        return context, True
+        return context, True, args.characters, args.references
     
     # Check if prompt provided as argument
     if args.prompt:
-        return args.prompt, False
+        return args.prompt, False, args.characters, args.references
     
     # Interactive prompt
     print("=" * 60)
@@ -115,7 +120,7 @@ Examples:
         print("Error: Empty prompt. Please provide a writing request.")
         sys.exit(1)
     
-    return prompt, False
+    return prompt, False, args.characters, args.references
 
 
 def main():
@@ -140,7 +145,7 @@ def main():
     print(f"✓ Gemini client initialized\n")
     
     # Get user input
-    user_prompt, is_recovery = get_user_input()
+    user_prompt, is_recovery, characters, references = get_user_input()
     
     # Initialize contents list with raw Content objects
     # This preserves thought_signature and other metadata
@@ -153,7 +158,26 @@ def main():
     else:
         initial_message = user_prompt
         print(f"\n📝 Task: {user_prompt}\n")
+
+    characters_text = load_text_file(characters) if characters else ""
+    references_text = load_text_file(references) if references else ""
+
+    if characters_text:
+        contents.append(types.Content(
+            role="user",
+            parts=[types.Part.from_text(
+                text="[CHARACTER SHEET]\n" + characters_text + "\n[/CHARACTER SHEET]"
+            )]
+        ))
     
+    if references_text:
+        contents.append(types.Content(
+            role="user",
+            parts=[types.Part.from_text(
+                text="[REFERENCE MATERIAL]\n" + references_text + "\n[/REFERENCE MATERIAL]"
+            )]
+        ))
+
     contents.append(types.Content(
         role="user",
         parts=[types.Part.from_text(text=initial_message)]
