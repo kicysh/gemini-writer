@@ -23,6 +23,7 @@ from utils import (
     get_tool_definitions, 
     get_tool_map,
     get_system_prompt,
+    load_text_file,
 )
 from tools.compression import compress_context_impl
 
