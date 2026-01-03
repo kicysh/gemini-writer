@@ -6,6 +6,9 @@ from typing import List, Dict, Any, Callable
 from google import genai
 from google.genai import types
 
+def load_text_file(path: str) -> str:
+    with open(path, "r", encoding="utf-8") as f:
+        return f.read()
 
 def estimate_token_count(client: genai.Client, model: str, contents: List[types.Content]) -> int:
     """
