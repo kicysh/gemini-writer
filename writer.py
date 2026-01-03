@@ -91,17 +91,26 @@ Examples:
         type=str,
         help='Reference text file path'
     )
-    
+    parser.add_argument(
+        '--recover',
+        type=str,
+        help='recover path'
+    )
+    parser.add_argument(
+        '--api_key',
+        type=str,
+        help='gimini api key'
+    )
     args = parser.parse_args()
     
     # Check if recovery mode
     if args.recover:
         context = load_context_from_file(args.recover)
-        return context, True, args.characters, args.references
+        return context, True, args.characters, args.references, args.api_key
     
     # Check if prompt provided as argument
     if args.prompt:
-        return args.prompt, False, args.characters, args.references
+        return args.prompt, False, args.characters, args.references, args.api_key
     
     # Interactive prompt
     print("=" * 60)
@@ -120,14 +129,17 @@ Examples:
         print("Error: Empty prompt. Please provide a writing request.")
         sys.exit(1)
     
-    return prompt, False, args.characters, args.references
+    return prompt, False, args.characters, args.references, args.api_key
 
 
 def main():
     """Main agent loop."""
+
+    # Get user input
+    user_prompt, is_recovery, characters, references, api_key = get_user_input()
     
     # Get API key
-    api_key = os.getenv("GEMINI_API_KEY")
+    api_key = api_key if api_key else os.getenv("GEMINI_API_KEY")
     if not api_key:
         print("Error: GEMINI_API_KEY environment variable not set.")
         print("Please set your API key: export GEMINI_API_KEY='your-key-here'")
@@ -143,9 +155,6 @@ def main():
     client = genai.Client(api_key=api_key)
     
     print(f"✓ Gemini client initialized\n")
-    
-    # Get user input
-    user_prompt, is_recovery, characters, references = get_user_input()
     
     # Initialize contents list with raw Content objects
     # This preserves thought_signature and other metadata
